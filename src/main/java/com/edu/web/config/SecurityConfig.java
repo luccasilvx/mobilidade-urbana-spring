@@ -20,11 +20,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/h2-console/**").permitAll()
-                        // Proteção real no servidor: apenas ADMIN cria, edita e exclui
-                        .requestMatchers("/web/linhas/nova", "/web/linhas/salvar", "/web/linhas/editar/**", "/web/linhas/excluir/**").hasRole("ADMIN")
-                        // Ambos os perfis podem listar
-                        .requestMatchers("/", "/web/linhas").hasAnyRole("ADMIN", "OPERADOR")
+                        .requestMatchers("/login").permitAll()
+                        // Console H2 restrito apenas a ADMIN (não mais público)
+                        .requestMatchers("/h2-console/**").hasRole("ADMIN")
+                        // Operações de escrita e troca de status restritas a ADMIN no servidor
+                        .requestMatchers(
+                                "/web/linhas/nova",
+                                "/web/linhas/salvar",
+                                "/web/linhas/editar/**",
+                                "/web/linhas/excluir/**",
+                                "/web/viagens/*/status"
+                        ).hasRole("ADMIN")
+                        // Consulta liberada para ADMIN e OPERADOR
+                        .requestMatchers("/", "/web/linhas", "/web/viagens", "/403").hasAnyRole("ADMIN", "OPERADOR")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -36,7 +44,9 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                // Necessário para o H2 Console continuar abrindo com Security ativo
+                .exceptionHandling(ex -> ex
+                        .accessDeniedPage("/403")
+                )
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 

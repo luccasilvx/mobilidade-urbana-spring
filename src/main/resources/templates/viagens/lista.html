@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Viagens - Mobilidade Urbana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/web/linhas}">Mobilidade Urbana</a>
+        <div class="navbar-nav me-auto">
+            <a class="nav-link" th:href="@{/web/linhas}">Linhas</a>
+            <a class="nav-link active" th:href="@{/web/viagens}">Viagens</a>
+        </div>
+        <div class="d-flex align-items-center gap-3 text-white">
+            <span>Usuário: <strong sec:authentication="name"></strong></span>
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <button type="submit" class="btn btn-outline-light btn-sm">Sair</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 class="mb-3">Viagens e Controle de Status</h2>
+
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+    <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+
+    <div class="table-responsive bg-white shadow-sm rounded">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>Linha</th>
+                <th>Veículo (Modal)</th>
+                <th>Início</th>
+                <th>Status Atual</th>
+                <th sec:authorize="hasRole('ADMIN')">Alterar Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="v : ${viagens}">
+                <td th:text="${v.linha != null ? v.linha.codigo + ' - ' + v.linha.nome : '-'}"></td>
+                <td th:text="${v.veiculo != null ? v.veiculo.modal + ' (Cap: ' + v.veiculo.capacidade + ')' : '-'}"></td>
+                <td th:text="${v.dataHoraInicio}"></td>
+                <td><span class="badge bg-primary" th:text="${v.status}"></span></td>
+                <td sec:authorize="hasRole('ADMIN')">
+                    <form th:action="@{/web/viagens/{id}/status(id=${v.id})}" method="post" class="d-flex gap-2">
+                        <select name="novoStatus" class="form-select form-select-sm" style="max-width: 160px;">
+                            <option th:each="st : ${statusList}" th:value="${st}" th:text="${st}"
+                                    th:selected="${st == v.status}"></option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Atualizar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
